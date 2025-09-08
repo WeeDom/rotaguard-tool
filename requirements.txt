@@ -1,0 +1,15 @@
+Flask>=2.2
+Flask-SQLAlchemy>=3.0
+SQLAlchemy>=2.0
+psycopg2-binary
+Flask-Migrate>=4.0
+python-dotenv
+Flask-Bcrypt
+PyJWT
+
+Werkzeug==2.2.2
+Flask-SQLAlchemy==3.1.0
+SQLAlchemy==2.0.16
+psycopg2-binary==2.9.5
+Flask-Migrate==4.0.7
+python-dotenv==0.21.0
