@@ -108,3 +108,41 @@ Here are three recommendations for building this application, covering the backe
         *   *Why:* Next.js is a React framework that provides a hybrid of static and server-rendering. It can handle both the frontend and backend (with API routes), simplifying the development process and deployment. It has a great developer experience and is well-suited for this type of application.
     *   **Database: SQLite or PostgreSQL.**
         *   *Why:* For a smaller application, SQLite could be sufficient and is very easy to set up (it's just a file). For a more robust and scalable solution, PostgreSQL is a better choice. Next.js works well with both.
+
+---
+
+## Getting Started
+
+### Initial Setup
+
+This project is fully containerized using Docker. To get started, you will need Docker and Docker Compose installed.
+
+1.  **Build and Run the Containers:**
+    This command will build the necessary Docker images and start the Flask (`web`) and PostgreSQL (`db`) services. The `-d` flag runs them in detached mode.
+
+    ```bash
+    docker-compose up --build -d
+    ```
+
+2.  **Set Up the Database:**
+    With the containers running, execute the following commands to initialize the database, create the initial migration, and apply it.
+
+    ```bash
+    # Initialize the migrations folder (only needs to be run once)
+    docker-compose exec web flask db init
+
+    # Create the migration script based on your models
+    docker-compose exec web flask db migrate -m "Initial migration."
+
+    # Apply the migration to the database
+    docker-compose exec web flask db upgrade
+    ```
+
+3.  **Create the First Admin User:**
+    Use the following `curl` command to register the first manager/admin user.
+
+    ```bash
+    curl -X POST -H "Content-Type: application/json" \
+    -d '{"email":"manager@example.com", "password":"securepassword123", "name":"Admin Manager"}' \
+    http://localhost:5000/api/auth/register
+    ```

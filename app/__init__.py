@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 import os
+from .api import api
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -17,9 +18,10 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     bcrypt.init_app(app)
+    api.init_app(app)
 
-    from .models import User
-    from .auth import auth as auth_blueprint
-    app.register_blueprint(auth_blueprint)
+    # Import and register namespaces inside the factory
+    from .auth_api import ns as auth_ns
+    api.add_namespace(auth_ns, path='/auth')
 
     return app
