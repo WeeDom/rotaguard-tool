@@ -22,6 +22,8 @@ def create_app():
 
     # Import and register namespaces inside the factory
     from .auth_api import ns as auth_ns
+    from .roles_api import ns as roles_ns
     api.add_namespace(auth_ns, path='/auth')
+    api.add_namespace(roles_ns, path='/roles')
 
     return app
