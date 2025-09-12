@@ -6,7 +6,10 @@ Flask-Migrate>=4.0
 python-dotenv
 Flask-Bcrypt
 PyJWT
+
 flask-restx
+pytest
+debugpy
 
 Werkzeug==2.2.2
 Flask-SQLAlchemy==3.1.0
