@@ -46,14 +46,26 @@ class RegisterResource(Resource):
 
         hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
 
+        # Use 'manager' as the default role for new registrations
+        role_name = 'manager'
+        from app.models import Role, UserRole
+        role = Role.query.filter_by(name=role_name).first()
+        if not role:
+            role = Role(name=role_name)
+            db.session.add(role)
+            db.session.commit()
+
         new_user = User(
             email=data['email'],
             password_hash=hashed_password,
-            name=data.get('name'),
-            role_name='manager' # Default role for new registrations
+            name=data.get('name')
         )
-
         db.session.add(new_user)
+        db.session.commit()
+
+        # Associate user with the role
+        user_role = UserRole(user_id=new_user.id, role_id=role.id)
+        db.session.add(user_role)
         db.session.commit()
 
         return {'message': 'New user created!'}, 201

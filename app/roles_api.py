@@ -50,7 +50,9 @@ class RoleResource(Resource):
         except ValueError:
             ns.abort(400, f"Invalid id format: '{id}' is not a valid UUID.")
 
-        role = Role.query.get(role_uuid)
+        # role = Role.query.get(role_uuid)
+        role = db.session.get(Role, role_uuid)  # SQLAlchemy 2.0 style
+
         if not role:
             ns.abort(404, f"Role with id {id} not found")
         return role

@@ -88,6 +88,7 @@ class User(BaseModel):
     __tablename__ = 'users'
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
+
     name = db.Column(db.String(150), nullable=False)
 
     manager_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=True)

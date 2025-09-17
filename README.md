@@ -146,3 +146,57 @@ This project is fully containerized using Docker. To get started, you will need 
     -d '{"email":"manager@example.com", "password":"securepassword123", "name":"Admin Manager"}' \
     http://localhost:5000/api/auth/register
     ```
+
+---
+
+## Debugging with vsdebug.py (debugpy helper)
+
+To simplify starting Python debugging sessions in your container, you can use a helper script (e.g., `vsdebug.py` or `vsdebug.sh`).
+
+### 1. Create the script locally
+
+Create a file named `vsdebug.py` or `vsdebug.sh` with the following contents:
+
+```bash
+#!/bin/bash
+python -m debugpy --listen 0.0.0.0:5678 --wait-for-client "$@"
+```
+
+### 2. Make the script executable
+
+```bash
+chmod +x vsdebug.sh
+```
+
+### 3. Add the script to your Docker image
+
+In your `Dockerfile`, add:
+
+```dockerfile
+COPY vsdebug.sh /usr/bin/vsdebug
+RUN chmod +x /usr/bin/vsdebug
+```
+
+This will make `vsdebug` available anywhere in your running container.
+
+### 4. Usage in the container
+
+After building and starting your container, you can run:
+
+```bash
+docker compose exec web vsdebug pytest
+```
+Or for any Python module
+```bash
+docker compose exec web vsdebug myscript.py
+```
+or
+
+```bash
+docker compose exec web vsdebug -m pytest tests/path/to/test_thing.py
+```
+
+This will start your Python process with debugpy, listening for VS Code to attach on port 5678.
+
+---
+

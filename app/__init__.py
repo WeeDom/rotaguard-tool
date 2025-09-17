@@ -9,10 +9,13 @@ db = SQLAlchemy()
 migrate = Migrate()
 bcrypt = Bcrypt()
 
-def create_app():
+def create_app(database_uri=None):
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'a-very-secret-key' # Change this in production
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    if database_uri is not None:
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
