@@ -27,7 +27,8 @@ token_model = ns.model('Token', {
 })
 
 message_model = ns.model('Message', {
-    'message': fields.String(description='A message describing the result of the operation')
+    'message': fields.String(description='A message describing the result of the operation'),
+    'id': fields.String(description='The ID of the newly created user')
 })
 
 
@@ -46,15 +47,6 @@ class RegisterResource(Resource):
 
         hashed_password = bcrypt.generate_password_hash(data['password']).decode('utf-8')
 
-        # Use 'manager' as the default role for new registrations
-        role_name = 'manager'
-        from app.models import Role, UserRole
-        role = Role.query.filter_by(name=role_name).first()
-        if not role:
-            role = Role(name=role_name)
-            db.session.add(role)
-            db.session.commit()
-
         new_user = User(
             email=data['email'],
             password_hash=hashed_password,
@@ -62,13 +54,7 @@ class RegisterResource(Resource):
         )
         db.session.add(new_user)
         db.session.commit()
-
-        # Associate user with the role
-        user_role = UserRole(user_id=new_user.id, role_id=role.id)
-        db.session.add(user_role)
-        db.session.commit()
-
-        return {'message': 'New user created!'}, 201
+        return {'message': 'New user created!', 'id': str(new_user.id)}, 201
 
 @ns.route('/login')
 class LoginResource(Resource):

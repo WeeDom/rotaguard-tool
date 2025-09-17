@@ -200,3 +200,75 @@ This will start your Python process with debugpy, listening for VS Code to attac
 
 ---
 
+## API: Role Management
+
+### Create a Role
+`POST /api/roles/`
+
+Request body:
+```json
+{
+  "name": "Cashier"
+}
+```
+Response:
+- **201 Created**: Returns the created role object.
+
+### List Roles
+`GET /api/roles/`
+
+Response:
+- **200 OK**: Returns a list of all roles.
+
+### Get Role by ID
+`GET /api/roles/<role_id>`
+
+Response:
+- **200 OK**: Returns the role object.
+- **404 Not Found**: If the role does not exist.
+
+---
+
+## API: Assign Roles to a User
+
+### Endpoint
+
+`PUT /api/users/<user_id>/roles`
+
+Assigns a list of roles to a user. Only accessible to managers (permission logic should be enforced in production).
+
+#### Request Body
+```json
+{
+  "role_names": ["Cashier", "Chef"]
+}
+```
+
+#### Success Response
+- **Status:** 200 OK
+- **Body:**
+```json
+{
+  "message": "Roles updated successfully"
+}
+```
+
+#### Error Responses
+- **400 Bad Request**: One or more roles not found
+- **404 Not Found**: User not found
+
+#### Example Usage
+```bash
+curl -X PUT -H "Content-Type: application/json" \
+  -d '{"role_names": ["Cashier", "Chef"]}' \
+  http://localhost:5000/api/users/<user_id>/roles
+```
+
+This endpoint allows a manager to assign or update the roles for any user. The user’s roles will be replaced with the provided list.
+
+---
+
+## Note: Permissions
+
+Role-based permissions (e.g., assigning specific permissions to roles) are not yet implemented. This is planned for a future sprint and will allow fine-grained access control for different user types.
+

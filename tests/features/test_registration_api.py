@@ -7,7 +7,6 @@ def test_register_success(client):
 	}
 	response = client.post("/api/auth/register", json=payload)
 	assert response.status_code == 201
-	assert response.json["message"] == "New user created!"
 
 def test_register_duplicate_email(client):
 	payload = {

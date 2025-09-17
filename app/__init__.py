@@ -1,11 +1,10 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from .db import db
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 import os
 from .api import api
 
-db = SQLAlchemy()
 migrate = Migrate()
 bcrypt = Bcrypt()
 
@@ -26,7 +25,9 @@ def create_app(database_uri=None):
     # Import and register namespaces inside the factory
     from .auth_api import ns as auth_ns
     from .roles_api import ns as roles_ns
+    from .users_api import api as users_ns
     api.add_namespace(auth_ns, path='/auth')
     api.add_namespace(roles_ns, path='/roles')
+    api.add_namespace(users_ns, path='/users')
 
     return app
