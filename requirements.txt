@@ -9,6 +9,7 @@ PyJWT
 
 flask-restx>=1.3.0
 pytest
+pytest-spec
 debugpy
 
 Werkzeug==2.2.2

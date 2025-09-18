@@ -40,7 +40,11 @@ class RegisterResource(Resource):
     @ns.marshal_with(message_model, code=201)
     def post(self):
         """Creates a new user."""
-        data = request.get_json()
+        data = request.get_json() or {}
+        required = ['email', 'password', 'name']
+        missing = [f for f in required if f not in data] if data else required
+        if missing:
+            ns.abort(400, f"Missing required field(s): {', '.join(missing)}")
 
         if User.query.filter_by(email=data['email']).first():
             ns.abort(409, 'Email address already registered')
@@ -50,11 +54,13 @@ class RegisterResource(Resource):
         new_user = User(
             email=data['email'],
             password_hash=hashed_password,
-            name=data.get('name')
+            name=data['name']
         )
         db.session.add(new_user)
         db.session.commit()
+
         return {'message': 'New user created!', 'id': str(new_user.id)}, 201
+
 
 @ns.route('/login')
 class LoginResource(Resource):

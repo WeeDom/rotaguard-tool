@@ -272,3 +272,15 @@ This endpoint allows a manager to assign or update the roles for any user. The u
 
 Role-based permissions (e.g., assigning specific permissions to roles) are not yet implemented. This is planned for a future sprint and will allow fine-grained access control for different user types.
 
+## Testing
+
+This project uses `pytest` for testing. For improved, spec-style test output, `pytest-spec` is included in the requirements.
+
+To run tests with spec-style output:
+
+```bash
+pytest --spec
+```
+
+This will display test results in a more readable, hierarchical format.
+
