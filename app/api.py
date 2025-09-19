@@ -4,5 +4,6 @@ api = Api(
     version='1.0',
     title='RotaGuard API',
     description='A comprehensive API for managing employee shifts and ensuring compliance with UK Working Time Regulations.',
-    prefix='/api'
+    prefix='/api',
+    doc='/api/docs'  # Move Swagger UI to /api/docs
 )

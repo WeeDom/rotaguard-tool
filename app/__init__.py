@@ -30,4 +30,9 @@ def create_app(database_uri=None):
     api.add_namespace(roles_ns, path='/roles')
     api.add_namespace(users_ns, path='/users')
 
+
+    # Register main blueprint for HTML routes
+    from .main.routes import main_bp
+    app.register_blueprint(main_bp)
+
     return app
