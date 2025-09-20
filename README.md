@@ -284,3 +284,45 @@ pytest --spec
 
 This will display test results in a more readable, hierarchical format.
 
+---
+
+## Full Stack Development Workflow (React + Flask)
+
+This project uses a **separated frontend and backend** architecture:
+
+- **Backend:** Flask REST API (no HTML, no Jinja templates)
+- **Frontend:** React (Vite) in `/frontend`
+
+### Running the App (Development)
+
+1. **Build and start all services:**
+   ```bash
+   docker compose up --build
+   ```
+   - Flask API: [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+   - React app: [http://localhost:5173](http://localhost:5173)
+
+2. **Frontend API Calls:**
+   - The React app is configured (via Vite proxy) to forward `/api` requests to the Flask backend.
+   - Example: `fetch('/api/auth/register', { ... })` from React will hit Flask.
+
+3. **Hot Reloading:**
+   - Both frontend and backend code changes are reflected live (thanks to Docker volumes and Vite/Flask dev servers).
+
+### Production
+
+- In production, you can build the React app and serve it as static files, or deploy frontend and backend separately.
+
+### Directory Structure
+
+- `/app` — Flask backend (API only)
+- `/frontend` — React app (Vite)
+
+### Notes
+
+- No HTML or Jinja templates are served by Flask.
+- All user-facing UI is handled by React.
+- Only API endpoints are exposed from Flask.
+
+---
+
