@@ -23,12 +23,15 @@ def create_app(database_uri=None):
     api.init_app(app)
 
     # Import and register namespaces inside the factory
+
     from .auth_api import ns as auth_ns
     from .roles_api import ns as roles_ns
     from .users_api import api as users_ns
+    from .teams_api import ns as teams_ns
     api.add_namespace(auth_ns, path='/auth')
     api.add_namespace(roles_ns, path='/roles')
     api.add_namespace(users_ns, path='/users')
+    api.add_namespace(teams_ns, path='/teams')
 
 
     # Register main blueprint for HTML routes

@@ -87,6 +87,7 @@ class Role(BaseModel):
 
 # Association table for many-to-many User <-> Team with summary
 class TeamMembership(db.Model):
+    __mapper_args__ = {"confirm_deleted_rows": False}
     __tablename__ = 'team_memberships'
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), primary_key=True)
     team_id = db.Column(UUID(as_uuid=True), db.ForeignKey('teams.id'), primary_key=True)
