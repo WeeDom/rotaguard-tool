@@ -1,14 +1,14 @@
 # Use official Node.js image
 FROM node:20
 
-# Set working directory
-WORKDIR /usr/src/app
+# Set working directory to frontend
+WORKDIR /usr/src/app/frontend
 
 # Install dependencies first (for better Docker cache)
 COPY package.json package-lock.json ./
 RUN npm install
 
-# Copy the rest of the app
+# Copy only the frontend app
 COPY . .
 
 # Expose Vite dev server port
