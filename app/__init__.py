@@ -10,6 +10,9 @@ bcrypt = Bcrypt()
 
 def create_app(database_uri=None):
     app = Flask(__name__)
+    # Register custom CLI commands after app is created
+    from .commands import create_roles_command
+    app.cli.add_command(create_roles_command)
     app.config['SECRET_KEY'] = 'a-very-secret-key' # Change this in production
     if database_uri is not None:
         app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
