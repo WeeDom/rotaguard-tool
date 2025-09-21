@@ -84,32 +84,64 @@ class Role(BaseModel):
     def __repr__(self):
         return f"<Role {self.name}>"
 
+
+# Association table for many-to-many User <-> Team with summary
+class TeamMembership(db.Model):
+    __tablename__ = 'team_memberships'
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), primary_key=True)
+    team_id = db.Column(UUID(as_uuid=True), db.ForeignKey('teams.id'), primary_key=True)
+    summary = db.Column(db.String(255), nullable=True)  # User's role/summary in the team
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = db.relationship('User', back_populates='team_associations')
+    team = db.relationship('Team', back_populates='user_associations')
+
+class Team(BaseModel):
+    __tablename__ = 'teams'
+    name = db.Column(db.String(150), nullable=False)
+    manager_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=True)
+
+    # Relationship to the association object
+    user_associations = db.relationship('TeamMembership', back_populates='team', cascade='all, delete-orphan')
+    members = association_proxy('user_associations', 'user')
+
+    # Relationship to manager (User)
+    manager = db.relationship('User', back_populates='managed_teams', foreign_keys=[manager_id])
+
+    def __repr__(self):
+        return f"<Team {self.name}>"
+
 class User(BaseModel):
     __tablename__ = 'users'
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(150), nullable=False)
-
     name = db.Column(db.String(150), nullable=False)
 
+    # Individual manager (User)
     manager_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'), nullable=True)
-
-    # Relationship to the association object
-    role_associations = db.relationship(
-        "UserRole",
-        back_populates="user",
-        cascade="all, delete-orphan",
-        foreign_keys=[UserRole.user_id]
-    )
-
-    # Proxy for easy access to roles, so we can still do user.roles
-    roles = association_proxy('role_associations', 'role')
-
     team_members = db.relationship(
         'User',
         backref=db.backref('manager', remote_side='User.id'),
         lazy='dynamic',
         foreign_keys='User.manager_id'
     )
+
+    # Relationship to the association object for roles
+    role_associations = db.relationship(
+        "UserRole",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys=[UserRole.user_id]
+    )
+    roles = association_proxy('role_associations', 'role')
+
+    # Relationship to the association object for teams
+    team_associations = db.relationship('TeamMembership', back_populates='user', cascade='all, delete-orphan')
+    teams = association_proxy('team_associations', 'team')
+
+    # Teams this user manages
+    managed_teams = db.relationship('Team', back_populates='manager', foreign_keys='Team.manager_id')
 
     def __repr__(self):
         return f"<User {self.email}>"
