@@ -14,6 +14,7 @@ api.add_namespace(ns)
 user_registration_model = ns.model('UserRegistration', {
     'email': fields.String(required=True, description='The user\'s email address'),
     'password': fields.String(required=True, description='The user\'s password'),
+    'confirm_password': fields.String(required=True, description='Password confirmation'),
     'name': fields.String(required=True, description='The user\'s name')
 })
 
@@ -41,10 +42,13 @@ class RegisterResource(Resource):
     def post(self):
         """Creates a new user."""
         data = request.get_json() or {}
-        required = ['email', 'password', 'name']
+        required = ['email', 'password', 'confirm_password', 'name']
         missing = [f for f in required if f not in data] if data else required
         if missing:
             ns.abort(400, f"Missing required field(s): {', '.join(missing)}")
+
+        if data['password'] != data['confirm_password']:
+            ns.abort(400, 'Passwords do not match')
 
         if User.query.filter_by(email=data['email']).first():
             ns.abort(409, 'Email address already registered')
@@ -58,6 +62,14 @@ class RegisterResource(Resource):
         )
         db.session.add(new_user)
         db.session.commit()
+
+        # Assign role if provided
+        role_id = data.get('role_id')
+        if role_id:
+            from .models import UserRole
+            user_role = UserRole(user_id=new_user.id, role_id=role_id)
+            db.session.add(user_role)
+            db.session.commit()
 
         return {'message': 'New user created!', 'id': str(new_user.id)}, 201
 

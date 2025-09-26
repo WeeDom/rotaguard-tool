@@ -10,9 +10,9 @@ ns = Namespace('roles', description='Role management operations')
 api.add_namespace(ns)
 
 role_model = ns.model('Role', {
-    'id': fields.String(readonly=True, description='The role unique identifier'),
-    'human_id': fields.Integer(readonly=True, description='The role human-readable unique identifier'),
-    'name': fields.String(required=True, description='The role name')
+    'role_id': fields.String(readonly=True, description='The role unique identifier'),
+    'role_human_id': fields.Integer(readonly=True, description='The role human-readable unique identifier'),
+    'role_name': fields.String(required=True, description='The role name')
 })
 
 @ns.route('/')
@@ -20,7 +20,15 @@ class RoleList(Resource):
     @ns.marshal_list_with(role_model)
     def get(self):
         """List all roles"""
-        return Role.query.all()
+        roles = Role.query.all()
+        return [
+            {
+                'role_id': str(role.id),
+                'role_human_id': role.human_id,
+                'role_name': role.name
+            }
+            for role in roles
+        ]
 
     @ns.expect(role_model)
     @ns.marshal_with(role_model)
