@@ -1,242 +1,370 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, FormEvent } from 'react';
 import { apiFetch } from './services/api';
-
-type Role = {
-  role_id: string;
-  role_name: string;
-  role_human_id: number;
-};
-
-function getPasswordProblems(password: string, confirmPassword: string) {
-  const problems = [
-    {
-      key: 'no_match',
-      label: 'Passwords do not match',
-      valid: password === confirmPassword && password.length > 0
-    },
-    {
-      key: 'too_short',
-      label: 'Password is too short (min 8 characters)',
-      valid: password.length >= 8
-    },
-    {
-      key: 'no_lowercase',
-      label: 'At least one lowercase letter',
-      valid: /[a-z]/.test(password)
-    },
-    {
-      key: 'no_uppercase',
-      label: 'At least one uppercase letter',
-      valid: /[A-Z]/.test(password)
-    },
-    {
-      key: 'no_number',
-      label: 'At least one number',
-      valid: /\d/.test(password)
-    },
-    {
-      key: 'no_special',
-      label: 'At least one special character',
-      valid: /[^A-Za-z0-9]/.test(password)
-    }
-  ];
-  return problems;
-}
-
-
-function getEmailProblems(email: string) {
-  return [
-    {
-      key: 'invalid_format',
-      label: 'Invalid email format',
-      valid: /^\S+@\S+\.\S+$/.test(email) && email.length > 0
-    }
-  ];
-}
-
+import { useNavigate } from 'react-router-dom';
 
 export default function Register() {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const [roleId, setRoleId] = useState<string>('');
-  const [name, setName] = useState<string>('');
-  const [error, setError] = useState<string>('');
-  const [success, setSuccess] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    apiFetch('/roles/')
-      .then((data: Role[]) => setRoles(data))
-      .catch(() => setRoles([]));
-  }, []);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirm_password: '',
+    name: '',
+    title: 'Mr',
+    address_line_1: '',
+    address_line_2: '',
+    address_line_3: '',
+    town: '',
+    county: '',
+    country: 'United Kingdom',
+    phone_country_code: '+44',
+    phone_number: '',
+    whatsapp: '',
+    twitter_x: '',
+    linkedin: '',
+    other_social_media: ''
+  });
 
-
-  const passwordProblems = getPasswordProblems(password, confirmPassword);
-  const emailValid = getEmailProblems(email);
-  // Helper to get selectedIndex for the role dropdown
-  const getRoleSelectedIndex = () => {
-    if (!roleId) return 0;
-    const idx = roles.findIndex(r => r.role_id === roleId);
-    return idx >= 0 ? idx + 1 : 0;
-  };
-
-  const allValid = (
-    passwordProblems.every(p => p.valid) &&
-    emailValid.every(p => p.valid) &&
-  getRoleSelectedIndex() > 0
-  );
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    if (!emailValid) {
-      setError('Please enter a valid email address.');
+
+    // Validation for required fields
+    if (!formData.email || !formData.password || !formData.name ||
+        !formData.address_line_1 || !formData.town || !formData.county ||
+        !formData.phone_number) {
+      setError('Please fill in all required fields.');
       return;
     }
-    if (!allValid) {
-      setError('Password does not meet all requirements.');
+
+    if (formData.password !== formData.confirm_password) {
+      setError('Passwords do not match.');
       return;
     }
-    if (!roleId) {
-      setError('Please select a role.');
-      return;
-    }
+
     setLoading(true);
+
     try {
       await apiFetch('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, confirm_password: confirmPassword, name, role_id: roleId })
+        body: JSON.stringify(formData),
       });
-      setSuccess('User created successfully!');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setRoleId('');
-    setName('');
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unknown error occurred.');
-      }
+
+      setSuccess('Registration successful! Redirecting to login...');
+      setTimeout(() => navigate('/login'), 2000);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+  };
+
   return (
-    <div className="max-w-md mt-8 mx-auto p-6 bg-white shadow rounded-lg">
-      <h2 className="text-lg font-semibold mb-4">Register New User</h2>
-      <form className="space-y-4" onSubmit={handleSubmit}>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl w-full space-y-8">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Name</label>
-          <input
-            type="text"
-            className="mt-1 block w-full border rounded px-3 py-2"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            required
-          />
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Please fill in all required fields marked with *
+          </p>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Email</label>
-          <input
-            type="email"
-            className="mt-1 block w-full border rounded px-3 py-2"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Password</label>
-          <div className="flex items-center gap-2 mt-1">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              className="block w-full border rounded px-3 py-2"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
+
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem'}}>
+
+            {/* Basic Information */}
+            <div style={{gridColumn: 'span 2'}}>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+            </div>
+
+            {/* Title */}
             <div>
-              <button
-                type="button"
-                className="text-xs text-gray-600 border border-gray-300 rounded px-2 py-1"
-                tabIndex={-1}
-                onClick={() => setShowPassword((v) => !v)}
+              <label className="block text-sm font-medium text-gray-700">Title *</label>
+              <select
+                value={formData.title}
+                onChange={handleChange('title')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
+                {['Mr', 'Mrs', 'Ms', 'Dr', 'Prof', 'Rev', 'Other'].map(title => (
+                  <option key={title} value={title}>{title}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Full Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={handleChange('name')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* Email */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Email Address *</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={handleChange('email')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Password *</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={handleChange('password')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Confirm Password *</label>
+              <input
+                type="password"
+                value={formData.confirm_password}
+                onChange={handleChange('confirm_password')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* Address Section */}
+            <div className="md:col-span-2 mt-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Address</h3>
+            </div>
+
+            {/* Address Line 1 */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Address Line 1 *</label>
+              <input
+                type="text"
+                value={formData.address_line_1}
+                onChange={handleChange('address_line_1')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* Address Line 2 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address Line 2</label>
+              <input
+                type="text"
+                value={formData.address_line_2}
+                onChange={handleChange('address_line_2')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            {/* Address Line 3 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address Line 3</label>
+              <input
+                type="text"
+                value={formData.address_line_3}
+                onChange={handleChange('address_line_3')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            {/* Town */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Town/City *</label>
+              <input
+                type="text"
+                value={formData.town}
+                onChange={handleChange('town')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* County */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">County/State *</label>
+              <input
+                type="text"
+                value={formData.county}
+                onChange={handleChange('county')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* Country */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Country *</label>
+              <select
+                value={formData.country}
+                onChange={handleChange('country')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                <option value="United States">🇺🇸 United States</option>
+                <option value="Canada">🇨🇦 Canada</option>
+                <option value="Australia">🇦🇺 Australia</option>
+                <option value="France">🇫🇷 France</option>
+                <option value="Germany">🇩🇪 Germany</option>
+                <option value="Ireland">🇮🇪 Ireland</option>
+                <option value="Spain">🇪🇸 Spain</option>
+                <option value="Italy">🇮🇹 Italy</option>
+                <option value="Netherlands">🇳🇱 Netherlands</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* Contact Information */}
+            <div className="md:col-span-2 mt-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Phone Country Code *</label>
+              <select
+                value={formData.phone_country_code}
+                onChange={handleChange('phone_country_code')}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="+44">+44 (UK)</option>
+                <option value="+1">+1 (US/Canada)</option>
+                <option value="+33">+33 (France)</option>
+                <option value="+49">+49 (Germany)</option>
+                <option value="+353">+353 (Ireland)</option>
+                <option value="+61">+61 (Australia)</option>
+                <option value="+34">+34 (Spain)</option>
+                <option value="+39">+39 (Italy)</option>
+                <option value="+31">+31 (Netherlands)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Phone Number * (without leading 0)</label>
+              <input
+                type="tel"
+                value={formData.phone_number}
+                onChange={handleChange('phone_number')}
+                placeholder="1234567890"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
+              />
+            </div>
+
+            {/* Social Media (Optional) */}
+            <div className="md:col-span-2 mt-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Social Media (Optional)</h3>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">WhatsApp</label>
+              <input
+                type="text"
+                value={formData.whatsapp}
+                onChange={handleChange('whatsapp')}
+                placeholder="+44 1234567890"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Twitter/X Handle</label>
+              <input
+                type="text"
+                value={formData.twitter_x}
+                onChange={handleChange('twitter_x')}
+                placeholder="@username"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">LinkedIn Profile URL</label>
+              <input
+                type="url"
+                value={formData.linkedin}
+                onChange={handleChange('linkedin')}
+                placeholder="https://linkedin.com/in/username"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700">Other Social Media (max 255 characters)</label>
+              <textarea
+                value={formData.other_social_media}
+                onChange={handleChange('other_social_media')}
+                maxLength={255}
+                rows={3}
+                placeholder="Instagram: @username, TikTok: @username, etc."
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              <div className="mt-1 text-sm text-gray-500">
+                {formData.other_social_media.length}/255 characters
+              </div>
             </div>
           </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
-          <div className="flex items-center gap-2 mt-1">
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              className="block w-full border rounded px-3 py-2"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              required
-            />
-            <div>
-              <button
-                type="button"
-                className="text-xs text-gray-600 border border-gray-300 rounded px-2 py-1"
-                tabIndex={-1}
-                onClick={() => setShowConfirmPassword((v) => !v)}
-              >
-                {showConfirmPassword ? 'Hide' : 'Show'}
-              </button>
+
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
             </div>
+          )}
+
+          {success && (
+            <div className="rounded-md bg-green-50 p-4">
+              <div className="text-sm text-green-700">{success}</div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                !loading
+                  ? 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </button>
           </div>
-        </div>
-        <div className="mt-2">
-          <ul className="space-y-1">
-            {passwordProblems.map((p, idx) => (
-              <li key={p.key} className="flex items-center gap-2 text-sm">
-                <span className={p.valid ? 'text-green-600' : 'text-red-600'}>
-                  {p.valid ? '✔' : '✖'}
-                </span>
-                <span>{p.label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Role</label>
-          <select
-            className="mt-1 block w-full border rounded px-3 py-2"
-            value={roleId}
-            onChange={e => setRoleId(e.target.value)}
-            required
-          >
-            <option value="">Select a role</option>
-            {roles.map((r) => (
-              <option key={r.role_id} value={r.role_id}>
-                {r.role_name} ({r.role_human_id})
-              </option>
-            ))}
-          </select>
-        </div>
-        {error && <div className="text-red-600 text-sm">{error}</div>}
-        {success && <div className="text-green-600 text-sm">{success}</div>}
-        <button
-          type="submit"
-          className={`px-4 py-2 rounded ${allValid && !loading ?
-             'bg-blue-600 text-white'
-             : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-          disabled={loading || !allValid}
-        >
-          {loading ? 'Registering...' : 'Register'}
-        </button>
-      </form>
+
+          <div className="text-center">
+            <span className="text-sm text-gray-600">
+              Already have an account?{' '}
+              <a href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+                Sign in here
+              </a>
+            </span>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
